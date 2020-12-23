@@ -497,7 +497,12 @@ void Copy(char* argv1,char* argv2){
     }
 
 
-    
+    //清空name
+    for(int i=0;i<NAMESIZE;i++){
+        name[i] = '\0';
+    }
+
+
     //argv1层数
     int num2 = get_path_and_name(argv1,name);
 
