@@ -68,12 +68,18 @@ void mkdir(char* argv[],int argc){
         Create_Dir(argv[1]);
     }else
     {
-        printf("Something strange about argument wrong?");
+        printf("Something strange about argument wrong\n");
     }
 }
 
 void cp(char* argv[],int argc){
-
+    if(argc > 3){
+        printf("Too many arguments.\n");
+    }else if(argc < 3){
+        printf("Too few arguements.\n");
+    }else if(argc == 3 ){
+        Copy(argv[1],argv[2]);
+    }
 
 }
 

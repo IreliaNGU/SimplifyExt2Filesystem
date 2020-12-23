@@ -145,7 +145,6 @@ void Read_Root(){
 
             if(mysys.datablocks[index_rootblock].block_item[i].valid==1){
 
-
                 switch (mysys.datablocks[index_rootblock].block_item[i].type)
                 {
                 case file_type:
@@ -207,6 +206,11 @@ void Read_Path(char* argv){
 
         }
 
+        if(j==MAX_ITEM_IN_BLOCK){
+            printf("No such file or directory.\n");
+            return;
+        }
+
         //获取该inode id所对应的block
         temp_blockid = mysys.inodes[temp_inodeid].block_point[0];
 
@@ -220,11 +224,17 @@ void Read_Path(char* argv){
         temp_block = mysys.datablocks[temp_blockid];
     }
 
+    if(mysys.inodes[temp_inodeid].file_type == file_type){
+        printf("This is a file.Please input a directory.\n");
+    }
+
     //输出temp_block的内容
     //遍历一个block之内的8个dir_item,寻找已被使用的item
     for(int i=0; i<MAX_ITEM_IN_BLOCK;i++){
 
+        //只输出valid为1并且为文件夹类型的文件
         if(temp_block.block_item[i].valid==1){
+
 
             switch (temp_block.block_item[i].type)
             {
@@ -280,6 +290,11 @@ void Create_File(char* argv){
 
         }
 
+        if(j==MAX_ITEM_IN_BLOCK){
+            printf("No such file or directory.\n");
+            return;
+        }
+
         //获取该inode id所对应的block
         temp_blockid = mysys.inodes[temp_inodeid].block_point[0];
 
@@ -328,8 +343,240 @@ void Create_File(char* argv){
             return;
         }
     }
+}
+
+void Create_Dir(char* argv){
+    char name[NAMESIZE];
+    init_buf(name,NAMESIZE);
+    
+    //层数
+    int num = get_path_and_name(argv,name);
+
+    INODE* p_root = &mysys.inodes[ROOTINODE];
+
+    //根目录指向的块
+    int index_rootblock = p_root->block_point[0];
 
 
+    DATABLOCK temp_block = mysys.datablocks[index_rootblock];
+
+    int temp_inodeid = ROOTINODE;
+
+    int temp_blockid = ROOTBLOCK;
+
+    //根据层数沿着路径找到最后一个目录下的文件
+    //注意最后一个是要创建的文件，所以与上面不同只用找到倒数第二个路径
+    for(int i=0;i< num-1 ;i++){
+        int j=0;
+        //找block下的每一个dir_item
+        for(;j<MAX_ITEM_IN_BLOCK;j++){
+
+            //找到当前block中与对应参数相同的dir_item
+            if(temp_block.block_item[j].valid && !strcmp(cur_path[i],temp_block.block_item[j].name)){
+
+                //获取下一路径的inode id
+                temp_inodeid = temp_block.block_item[j].inode_id;
+
+                break;
+            }
+
+        }
+
+        if(j==MAX_ITEM_IN_BLOCK){
+            printf("No such file or directory.\n");
+            return;
+        }
+
+        //获取该inode id所对应的block
+        temp_blockid = mysys.inodes[temp_inodeid].block_point[0];
+
+        //该block中没有文件
+        if(temp_blockid==0){
+            printf("Nothing in directory %s.\n",temp_block.block_item[j].name);
+            return;
+        }
+
+        //更新temp_block为下一路径的block
+        temp_block = mysys.datablocks[temp_blockid];
+    }
+
+    int newinodeid;
+    int newblockid;
+    for(int i=0;i<MAX_ITEM_IN_BLOCK;i++){
+        //可用的dir_item
+
+        if(temp_block.block_item[i].valid==0){
 
 
+            mysys.datablocks[temp_blockid].block_item[i].valid =1;
+
+            mysys.datablocks[temp_blockid].block_item[i].type=dir_type;
+
+            strcpy(mysys.datablocks[temp_blockid].block_item[i].name,name);
+            // mysys.datablocks[temp_blockid].block_item[i].name= cur_path[num-1];
+
+            //分配新的inode
+            if((newinodeid = alloc_inode())!=-1){
+                mysys.datablocks[temp_blockid].block_item[i].inode_id=newinodeid;
+            }else{
+                printf("Fail to create dir.\n");
+                return;
+            }
+
+            //为新的inode分配新的block
+            if((newblockid = alloc_block())!=-1){
+                mysys.inodes[newinodeid].block_point[0] = newblockid;
+            }
+
+            mysys.inodes[newinodeid].file_type = dir_type;
+
+            printf("Successfully create a directory.\n");
+
+            return;
+        }
+    }
+}
+
+void Copy(char* argv1,char* argv2){
+
+    char name[NAMESIZE];
+    init_buf(name,NAMESIZE);
+    
+    //argv2层数
+    int num = get_path_and_name(argv2,name);
+
+    INODE* p_root = &mysys.inodes[ROOTINODE];
+
+    //根目录指向的块
+    int index_rootblock = p_root->block_point[0];
+
+
+    DATABLOCK temp_block = mysys.datablocks[index_rootblock];
+
+    int temp_inodeid = ROOTINODE;
+
+    int temp_blockid = ROOTBLOCK;
+
+    //根据层数沿着路径找到最后一个目录下的文件
+    for(int i=0;i< num ;i++){
+        int j=0;
+        //找block下的每一个dir_item
+        for(;j<MAX_ITEM_IN_BLOCK;j++){
+
+            //找到当前block中与对应参数相同的dir_item
+            if(temp_block.block_item[j].valid && !strcmp(cur_path[i],temp_block.block_item[j].name)){
+
+                //获取下一路径的inode id
+                temp_inodeid = temp_block.block_item[j].inode_id;
+
+                break;
+            }
+
+        }
+
+        if(j==MAX_ITEM_IN_BLOCK){
+            printf("No such file or directory.\n");
+            return;
+        }
+
+        //获取该inode id所对应的block
+        temp_blockid = mysys.inodes[temp_inodeid].block_point[0];
+
+        //该block中没有文件
+        if(temp_blockid==0){
+            printf("Nothing in directory %s.\n",temp_block.block_item[j].name);
+            return;
+        }
+
+        //更新temp_block为下一路径的block
+        temp_block = mysys.datablocks[temp_blockid];
+    }
+
+
+    
+    //argv1层数
+    int num2 = get_path_and_name(argv1,name);
+
+    DATABLOCK temp_block2 = mysys.datablocks[index_rootblock];
+
+    int temp_inodeid2 = ROOTINODE;
+
+    int temp_blockid2 = ROOTBLOCK;
+
+    //根据层数沿着路径找到最后一个目录下的文件
+    //注意最后一个是要创建的文件，所以与上面不同只用找到倒数第二个路径
+    for(int i=0;i< num-1 ;i++){
+        int j=0;
+        //找block下的每一个dir_item
+        for(;j<MAX_ITEM_IN_BLOCK;j++){
+
+            //找到当前block中与对应参数相同的dir_item
+            if(temp_block2.block_item[j].valid && !strcmp(cur_path[i],temp_block2.block_item[j].name)){
+
+                //获取下一路径的inode id
+                temp_inodeid2 = temp_block2.block_item[j].inode_id;
+
+                break;
+            }
+
+        }
+
+        if(j==MAX_ITEM_IN_BLOCK){
+            printf("No such file or directory.\n");
+            return;
+        }
+
+        //获取该inode id所对应的block
+        temp_blockid2 = mysys.inodes[temp_inodeid2].block_point[0];
+
+        //该block中没有文件
+        if(temp_blockid2==0){
+            printf("Nothing in directory %s.\n",temp_block2.block_item[j].name);
+            return;
+        }
+
+        //更新temp_block为下一路径的block
+        temp_block2 = mysys.datablocks[temp_blockid2];
+    }
+
+    int newinodeid;
+    int newblockid;
+    for(int i=0;i<MAX_ITEM_IN_BLOCK;i++){
+        //可用的dir_item
+
+        if(temp_block2.block_item[i].valid==0){
+
+
+            mysys.datablocks[temp_blockid2].block_item[i].valid =1;
+
+            mysys.datablocks[temp_blockid2].block_item[i].type=file_type;
+
+            strcpy(mysys.datablocks[temp_blockid2].block_item[i].name,name);
+            // mysys.datablocks[temp_blockid].block_item[i].name= cur_path[num-1];
+
+            //分配新的inode
+            if((newinodeid = alloc_inode())!=-1){
+                mysys.datablocks[temp_blockid2].block_item[i].inode_id=newinodeid;
+            }else{
+                printf("Fail to create file.\n");
+                return;
+            }
+
+            //为新的inode分配新的block
+            if((newblockid = alloc_block())!=-1){
+                mysys.inodes[newinodeid].block_point[0] = newblockid;
+            }
+
+            mysys.inodes[newinodeid].file_type = file_type;
+
+            //将argv2的block的内容复制到argv1中
+            for(int i=0;i<MAX_ITEM_IN_BLOCK;i++){
+                mysys.datablocks[newblockid].block_item[i] = temp_block.block_item[i];
+            }
+
+            printf("Successfully copy a file.\n");
+
+            return;
+        }
+    }
 }

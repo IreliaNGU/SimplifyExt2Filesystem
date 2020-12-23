@@ -87,7 +87,7 @@ void exec(){
     }else if(!strcmp(command,"shutdown")) {
         shutdown();
     }else{
-        printf("Invalid command.");
+        printf("Invalid command.\n");
     }
     
 }

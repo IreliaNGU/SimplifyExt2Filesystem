@@ -51,6 +51,9 @@ void Create_File(char* argv);
 //根据路径创建文件夹
 void Create_Dir(char* argv);
 
+//复制文件
+void Copy(char* argv1,char* argv2);
+
 
 
 
