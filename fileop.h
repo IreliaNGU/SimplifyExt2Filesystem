@@ -5,9 +5,10 @@
 #include "interface.h"
 #include "utils.h"
 
-#define MAGICNUMBER 9527
+#define MAGICNUMBER 9525
 #define SIZE 1000 //文件大小
 #define ROOTINODE 2 //根目录所在索引
+#define ROOTBLOCK 2 //根目录所在块
 #define NAMESIZE 10 //文件夹以及文件的名字长度
 
 typedef enum type
@@ -44,12 +45,11 @@ void Read_Root();
 //读取某个路径下的文件
 void Read_Path(char* argv);
 
+//根据路径创建文件
+void Create_File(char* argv);
 
-
-
-
-
-
+//根据路径创建文件夹
+void Create_Dir(char* argv);
 
 
 

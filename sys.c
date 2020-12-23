@@ -45,13 +45,31 @@ void ls(char* argv[],int argc){
 }
 
 void touch(char* argv[],int argc){
-
+    if (argc > 2){
+        printf("Too many arguments.\n");
+    }else if(argc == 1){
+        printf("Just receive 1 argument.\n");
+    }else if(argc ==2){
+        Create_File(argv[1]);
+    }else
+    {
+        printf("Something strange about argument wrong?");
+    }
+    
 }
 
 
 void mkdir(char* argv[],int argc){
-
-
+   if (argc > 2){
+        printf("Too many arguments.\n");
+    }else if(argc == 1){
+        printf("Just receive 1 argument.\n");
+    }else if(argc ==2){
+        Create_Dir(argv[1]);
+    }else
+    {
+        printf("Something strange about argument wrong?");
+    }
 }
 
 void cp(char* argv[],int argc){

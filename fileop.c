@@ -53,12 +53,14 @@ void Init_rootdir(){
     //根目录在inode中类型为dir
     mysys.inodes[ROOTINODE].file_type=dir_type;
 
+    mysys.inodes[ROOTINODE].block_point[0] = ROOTBLOCK;
+
     //更改超级块信息
     mysys.spblock.dir_inode_count++;
 
     mysys.spblock.free_inode_count--;
 
-    mysys.spblock.inode_map[0] = 0x20000000;
+    mysys.spblock.inode_map[0] |= 0x20000000;
 }
 
 
@@ -239,5 +241,95 @@ void Read_Path(char* argv){
     }
     
     return;
+}
+
+void Create_File(char* argv){
+    char name[NAMESIZE];
+    init_buf(name,NAMESIZE);
+    
+    //层数
+    int num = get_path_and_name(argv,name);
+
+    INODE* p_root = &mysys.inodes[ROOTINODE];
+
+    //根目录指向的块
+    int index_rootblock = p_root->block_point[0];
+
+
+    DATABLOCK temp_block = mysys.datablocks[index_rootblock];
+
+    int temp_inodeid = ROOTINODE;
+
+    int temp_blockid = ROOTBLOCK;
+
+    //根据层数沿着路径找到最后一个目录下的文件
+    //注意最后一个是要创建的文件，所以与上面不同只用找到倒数第二个路径
+    for(int i=0;i< num-1 ;i++){
+        int j=0;
+        //找block下的每一个dir_item
+        for(;j<MAX_ITEM_IN_BLOCK;j++){
+
+            //找到当前block中与对应参数相同的dir_item
+            if(temp_block.block_item[j].valid && !strcmp(cur_path[i],temp_block.block_item[j].name)){
+
+                //获取下一路径的inode id
+                temp_inodeid = temp_block.block_item[j].inode_id;
+
+                break;
+            }
+
+        }
+
+        //获取该inode id所对应的block
+        temp_blockid = mysys.inodes[temp_inodeid].block_point[0];
+
+        //该block中没有文件
+        if(temp_blockid==0){
+            printf("Nothing in directory %s.\n",temp_block.block_item[j].name);
+            return;
+        }
+
+        //更新temp_block为下一路径的block
+        temp_block = mysys.datablocks[temp_blockid];
+    }
+
+    int newinodeid;
+    int newblockid;
+    for(int i=0;i<MAX_ITEM_IN_BLOCK;i++){
+        //可用的dir_item
+
+        if(temp_block.block_item[i].valid==0){
+
+
+            mysys.datablocks[temp_blockid].block_item[i].valid =1;
+
+            mysys.datablocks[temp_blockid].block_item[i].type=file_type;
+
+            strcpy(mysys.datablocks[temp_blockid].block_item[i].name,name);
+            // mysys.datablocks[temp_blockid].block_item[i].name= cur_path[num-1];
+
+            //分配新的inode
+            if((newinodeid = alloc_inode())!=-1){
+                mysys.datablocks[temp_blockid].block_item[i].inode_id=newinodeid;
+            }else{
+                printf("Fail to create file.\n");
+                return;
+            }
+
+            //为新的inode分配新的block
+            if((newblockid = alloc_block())!=-1){
+                mysys.inodes[newinodeid].block_point[0] = newblockid;
+            }
+
+            mysys.inodes[newinodeid].file_type = file_type;
+
+            printf("Successfully create a file.\n");
+
+            return;
+        }
+    }
+
+
+
 
 }
