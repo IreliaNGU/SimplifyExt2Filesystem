@@ -505,7 +505,7 @@ void Copy(char* argv1,char* argv2){
 
     //根据层数沿着路径找到最后一个目录下的文件
     //注意最后一个是要创建的文件，所以与上面不同只用找到倒数第二个路径
-    for(int i=0;i< num-1 ;i++){
+    for(int i=0;i< num2-1 ;i++){
         int j=0;
         //找block下的每一个dir_item
         for(;j<MAX_ITEM_IN_BLOCK;j++){
