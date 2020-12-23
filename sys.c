@@ -58,7 +58,6 @@ void touch(char* argv[],int argc){
     
 }
 
-
 void mkdir(char* argv[],int argc){
    if (argc > 2){
         printf("Too many arguments.\n");

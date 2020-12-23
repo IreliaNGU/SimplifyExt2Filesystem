@@ -282,6 +282,11 @@ void Create_File(char* argv){
             //找到当前block中与对应参数相同的dir_item
             if(temp_block.block_item[j].valid && !strcmp(cur_path[i],temp_block.block_item[j].name)){
 
+                if(temp_block.block_item[j].type == file_type){
+                    printf("Can not create a file in another file.\n");
+                    return;
+                }
+
                 //获取下一路径的inode id
                 temp_inodeid = temp_block.block_item[j].inode_id;
 
@@ -327,7 +332,7 @@ void Create_File(char* argv){
             if((newinodeid = alloc_inode())!=-1){
                 mysys.datablocks[temp_blockid].block_item[i].inode_id=newinodeid;
             }else{
-                printf("Fail to create file.\n");
+                printf("Fail to create a file.\n");
                 return;
             }
 
@@ -406,7 +411,6 @@ void Create_Dir(char* argv){
         //可用的dir_item
 
         if(temp_block.block_item[i].valid==0){
-
 
             mysys.datablocks[temp_blockid].block_item[i].valid =1;
 

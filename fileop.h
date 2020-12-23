@@ -5,7 +5,7 @@
 #include "interface.h"
 #include "utils.h"
 
-#define MAGICNUMBER 9525
+#define MAGICNUMBER 9527
 #define SIZE 1000 //文件大小
 #define ROOTINODE 2 //根目录所在索引
 #define ROOTBLOCK 2 //根目录所在块
